@@ -107,9 +107,9 @@ def joinFactors(factors: List[Factor]):
     for factor in factors:
         unconditioned |= factor.unconditionedVariables()
         conditioned |= factor.conditionedVariables()
+        # all factors come from the same bayes net, so the domains are the same
+        domains = factor.variableDomainsDict()
     conditioned -= unconditioned
-    factors = list(factors)
-    domains = factors[0].variableDomainsDict()
     newFactor = Factor(unconditioned, conditioned, domains)
     for assignment in newFactor.getAllPossibleAssignmentDicts():
         prob = 1.0

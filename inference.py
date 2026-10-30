@@ -61,7 +61,10 @@ def constructBayesNet(gameState: hunters.GameState):
     variableDomainsDict = {}
 
     "*** YOUR CODE HERE ***"
-    positions = [(x, y) for x in range(X_RANGE) for y in range(Y_RANGE)]
+    positions = []
+    for x in range(X_RANGE):
+        for y in range(Y_RANGE):
+            positions.append((x, y))
     for var in [PAC, GHOST0, GHOST1]:
         variableDomainsDict[var] = positions
 
@@ -366,13 +369,16 @@ class DiscreteDistribution(dict):
         """
         "*** YOUR CODE HERE ***"
         total = self.total()
-        r = random.random() * total
-        cumulative = 0.0
-        for key, value in self.items():
-            cumulative += value
-            if r < cumulative:
+        target = random.random() * total
+        runningSum = 0.0
+        lastKey = None
+        for key in self.keys():
+            runningSum += self[key]
+            if target < runningSum:
                 return key
-        return key
+            lastKey = key
+        # in case of floating point rounding, just return the last key
+        return lastKey
         "*** END YOUR CODE HERE ***"
 
 
@@ -630,8 +636,11 @@ class ParticleFilter(InferenceModule):
         self.particles = []
         "*** YOUR CODE HERE ***"
         numPositions = len(self.legalPositions)
+        # go through the legal positions in order, wrapping around with mod,
+        # so every position gets about the same number of particles
         for i in range(self.numParticles):
-            self.particles.append(self.legalPositions[i % numPositions])
+            position = self.legalPositions[i % numPositions]
+            self.particles.append(position)
         "*** END YOUR CODE HERE ***"
 
     def getBeliefDistribution(self):
@@ -669,13 +678,22 @@ class ParticleFilter(InferenceModule):
         "*** YOUR CODE HERE ***"
         pacmanPosition = gameState.getPacmanPosition()
         jailPosition = self.getJailPosition()
+
+        # weight each particle by how likely the observation is from there
         weights = DiscreteDistribution()
         for particle in self.particles:
-            weights[particle] += self.getObservationProb(observation, pacmanPosition, particle, jailPosition)
+            prob = self.getObservationProb(observation, pacmanPosition, particle, jailPosition)
+            weights[particle] += prob
+
+        # every particle got zero weight, so start over
         if weights.total() == 0:
             self.initializeUniformly(gameState)
             return
-        self.particles = [weights.sample() for _ in range(self.numParticles)]
+
+        newParticles = []
+        for i in range(self.numParticles):
+            newParticles.append(weights.sample())
+        self.particles = newParticles
         "*** END YOUR CODE HERE ***"
     
     ########### ########### ###########
