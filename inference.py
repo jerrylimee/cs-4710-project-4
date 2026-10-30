@@ -336,7 +336,11 @@ class DiscreteDistribution(dict):
         {}
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        total = self.total()
+        if total == 0:
+            return
+        for key in self.keys():
+            self[key] = self[key] / total
         "*** END YOUR CODE HERE ***"
 
     def sample(self):
@@ -361,7 +365,14 @@ class DiscreteDistribution(dict):
         0.0
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        total = self.total()
+        r = random.random() * total
+        cumulative = 0.0
+        for key, value in self.items():
+            cumulative += value
+            if r < cumulative:
+                return key
+        return key
         "*** END YOUR CODE HERE ***"
 
 
@@ -436,6 +447,12 @@ class InferenceModule:
         Return the probability P(noisyDistance | pacmanPosition, ghostPosition).
         """
         "*** YOUR CODE HERE ***"
+        if ghostPosition == jailPosition:
+            return 1.0 if noisyDistance is None else 0.0
+        if noisyDistance is None:
+            return 0.0
+        trueDistance = manhattanDistance(pacmanPosition, ghostPosition)
+        return busters.getObservationProbability(noisyDistance, trueDistance)
         raiseNotDefined()
         "*** END YOUR CODE HERE ***"
 
